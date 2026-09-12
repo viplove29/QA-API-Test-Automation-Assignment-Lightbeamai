@@ -60,7 +60,7 @@ This installs Express from [package.json](package.json). For a clean, lockfile-b
 
 Using a virtual environment keeps the test dependencies separate from global Python packages.
 
-### Set BASE_URL in Windows PowerShell
+### Windows PowerShell
 
 ```powershell
 python -m venv .venv
@@ -75,7 +75,7 @@ If PowerShell blocks virtual-environment activation, run this once in the curren
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-### Set BASE_URL in macOS/Linux
+### macOS/Linux
 
 ```bash
 python3 -m venv .venv
@@ -116,6 +116,85 @@ Expected result:
 
 The command creates both a machine-readable JUnit file and a visual HTML report.
 
+## Manual Verification Walkthrough
+
+Use this sequence when running the framework manually on Windows. Keep the API terminal open until every test command has finished.
+
+### Terminal 1: Start the mock API
+
+```powershell
+Set-Location C:\Users\BiVi440\QA_API_Test_Automation_Assignment
+npm install
+npm run start
+```
+
+Confirm this message appears before continuing:
+
+```text
+Mock API Server running at http://localhost:3000
+```
+
+### Terminal 2: Prepare the Python test environment
+
+```powershell
+Set-Location C:\Users\BiVi440\QA_API_Test_Automation_Assignment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+If script execution is blocked, run the following once in Terminal 2, then activate the environment again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+### Run each test area
+
+Start with authentication to confirm the mock API and Python client are connected:
+
+```powershell
+python -m pytest tests/test_auth.py -q
+```
+
+Expected result: `3 passed`.
+
+Next, run the stateful order workflows:
+
+```powershell
+python -m pytest tests/test_orders.py -q
+```
+
+Expected result: `7 passed` in roughly 35 seconds.
+
+Then run the export workflows. The completed-export test deliberately waits for the real 60-second server transition:
+
+```powershell
+python -m pytest tests/test_exports.py -q
+```
+
+Expected result: `5 passed` in roughly 62 seconds.
+
+### Run the final result
+
+After the focused runs pass, execute the entire suite and generate its JUnit artifact:
+
+```powershell
+python -m pytest -q --junitxml=test-results/junit.xml
+```
+
+Expected result: `15 passed` in roughly 95 seconds. The same run also generates `reports/api-test-report.html`.
+
+Open the visual result in the default browser:
+
+```powershell
+Start-Process reports/api-test-report.html
+```
+
+When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
+
 ## Project Structure
 
 ```text
@@ -150,14 +229,14 @@ node_modules/                          # Node.js dependencies
 
 Tests use `BASE_URL` and default to `http://localhost:3000/v1`.
 
-### Windows PowerShell
+### Set BASE_URL in Windows PowerShell
 
 ```powershell
 $env:BASE_URL = "http://localhost:3000/v1"
 python -m pytest -q
 ```
 
-### macOS/Linux
+### Set BASE_URL in macOS/Linux
 
 ```bash
 BASE_URL="http://localhost:3000/v1" python -m pytest -q
