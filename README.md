@@ -6,9 +6,9 @@ The repository is self-contained: it includes the mock server, Python test suite
 
 ## Latest Test Report
 
-The most recent local execution completed with all 15 test cases passing. The full interactive report is generated for every local and CI run.
+The most recent full local execution completed with all 15 test cases passing. pytest writes Allure result data on every run; the interactive dashboard is generated from that data and is also produced by GitHub Actions.
 
-![QA API automation HTML report showing 15 passing tests](docs/report-preview.png)
+![Allure dashboard showing 15 API test cases with 100 percent passing](docs/allure-report-preview.png)
 
 ## Contents
 
@@ -148,7 +148,7 @@ Expected result:
 15 passed
 ```
 
-The command creates both a machine-readable JUnit file and a visual HTML report.
+The command creates native Allure results, a machine-readable JUnit file, and a single-file pytest HTML summary. Generate the Allure dashboard with `npm run allure:generate`.
 
 ## Manual Verification Walkthrough
 
@@ -219,12 +219,13 @@ After the focused runs pass, execute the entire suite and generate its JUnit art
 python -m pytest -q --junitxml=test-results/junit.xml
 ```
 
-Expected result: `15 passed` in roughly 95 seconds. The same run also generates `reports/api-test-report.html`.
+Expected result: `15 passed` in roughly 95 seconds. The same run generates `allure-results/`, `reports/api-test-report.html`, and `test-results/junit.xml`.
 
-Open the visual result in the default browser:
+Generate and open the primary Allure dashboard:
 
 ```powershell
-Start-Process reports/api-test-report.html
+npm run allure:generate
+npm run allure:open
 ```
 
 When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
@@ -238,7 +239,8 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 |   `-- report_style.css               # Embedded HTML report theme
 |-- docs/
 |   |-- architecture.md                # Full framework architecture diagram
-|   `-- report-preview.png             # Screenshot of the latest passing report
+|   |-- allure-report-preview.png      # Screenshot of the 15-pass Allure dashboard
+|   `-- report-preview.png             # Screenshot of the pytest HTML report
 |-- framework/
 |   |-- api_client.py                  # API endpoint objects and shared HTTP client
 |   `-- polling.py                     # Deadline-based async polling helper
@@ -302,7 +304,7 @@ Each order test uses a generated UUID for its `customerId` and `X-Correlation-ID
 
 ## Run the Test Suite
 
-pytest is configured in [pytest.ini](pytest.ini) to automatically generate a self-contained HTML report. Any pytest command below overwrites the previous report at `reports/api-test-report.html`.
+pytest is configured in [pytest.ini](pytest.ini) to automatically create Allure results and a self-contained pytest HTML summary. Any pytest command below refreshes `allure-results/` and overwrites `reports/api-test-report.html`.
 
 ### Full suite
 
