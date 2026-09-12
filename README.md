@@ -210,6 +210,7 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 |-- assets/
 |   `-- report_style.css               # Embedded HTML report theme
 |-- framework/
+|   |-- api_client.py                  # API endpoint objects and shared HTTP client
 |   `-- polling.py                     # Deadline-based async polling helper
 |-- tests/
 |   |-- test_auth.py                   # Login and authorization tests
@@ -257,6 +258,8 @@ BASE_URL="http://localhost:3000/v1" python -m pytest -q
 
 - Every API call uses an explicit five-second HTTP timeout.
 - A session-scoped `requests.Session` reuses HTTP connections across tests.
+- The API Page Object Model in `framework/api_client.py` centralizes endpoint paths, HTTP methods, protected-route headers, and request execution.
+- Test modules interact with `auth`, `orders`, and `exports` endpoint objects rather than assembling URLs or issuing raw HTTP requests.
 - Before the first request, the framework posts to `/auth/login` as a health check.
 - If the API is unavailable, test setup fails early with the exact server-start command needed to recover.
 - The authenticated fixture obtains a Bearer token once per test session and supplies it to protected endpoints.

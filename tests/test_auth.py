@@ -1,12 +1,8 @@
-import requests
+from framework.api_client import ApiClient
 
 
-def test_login_returns_bearer_token(api_client: requests.Session, base_url: str) -> None:
-    response = api_client.post(
-        f"{base_url}/auth/login",
-        json={"username": "api-tester", "apiKey": "valid-key"},
-        timeout=5,
-    )
+def test_login_returns_bearer_token(api_client: ApiClient) -> None:
+    response = api_client.auth.login({"username": "api-tester", "apiKey": "valid-key"})
 
     assert response.status_code == 200
     body = response.json()
@@ -14,18 +10,16 @@ def test_login_returns_bearer_token(api_client: requests.Session, base_url: str)
     assert body["expiresIn"] == 3600
 
 
-def test_login_rejects_missing_credentials(api_client: requests.Session, base_url: str) -> None:
+def test_login_rejects_missing_credentials(api_client: ApiClient) -> None:
     for payload in ({"apiKey": "valid-key"}, {"username": "api-tester"}, {}):
-        response = api_client.post(f"{base_url}/auth/login", json=payload, timeout=5)
+        response = api_client.auth.login(payload)
 
         assert response.status_code == 400
         assert response.json() == {"error": "Missing credentials"}
 
 
-def test_protected_route_rejects_missing_bearer_token(
-    api_client: requests.Session, base_url: str
-) -> None:
-    response = api_client.get(f"{base_url}/orders/not-a-real-order", timeout=5)
+def test_protected_route_rejects_missing_bearer_token(api_client: ApiClient) -> None:
+    response = api_client.orders.get("not-a-real-order", auth_headers={})
 
     assert response.status_code == 401
     assert response.json() == {"error": "Unauthorized: Missing or invalid token"}

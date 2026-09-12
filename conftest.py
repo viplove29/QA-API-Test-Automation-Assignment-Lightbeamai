@@ -5,6 +5,8 @@ from uuid import uuid4
 import pytest
 import requests
 
+from framework.api_client import ApiClient
+
 
 @pytest.fixture(scope="session")
 def base_url() -> str:
@@ -12,15 +14,10 @@ def base_url() -> str:
 
 
 @pytest.fixture(scope="session")
-def api_client(base_url: str) -> requests.Session:
-    session = requests.Session()
-    session.headers.update({"Accept": "application/json"})
+def api_client(base_url: str) -> ApiClient:
+    client = ApiClient(base_url)
     try:
-        response = session.post(
-            f"{base_url}/auth/login",
-            json={"username": "health-check", "apiKey": "health-check"},
-            timeout=5,
-        )
+        response = client.auth.login({"username": "health-check", "apiKey": "health-check"})
     except requests.ConnectionError as error:
         pytest.fail(
             f"Mock API is unavailable at {base_url}. Start it with 'npm install' then 'npm run start'. {error}",
@@ -32,15 +29,13 @@ def api_client(base_url: str) -> requests.Session:
             f"Mock API health check at {base_url}/auth/login returned {response.status_code}: {response.text}",
             pytrace=False,
         )
-    return session
+    return client
 
 
 @pytest.fixture(scope="session")
-def auth_headers(api_client: requests.Session, base_url: str) -> dict[str, str]:
-    response = api_client.post(
-        f"{base_url}/auth/login",
-        json={"username": "qa-automation", "apiKey": "test-api-key"},
-        timeout=5,
+def auth_headers(api_client: ApiClient) -> dict[str, str]:
+    response = api_client.auth.login(
+        {"username": "qa-automation", "apiKey": "test-api-key"}
     )
     assert response.status_code == 200
     token = response.json()["token"]
