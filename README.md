@@ -4,8 +4,15 @@ A production-oriented API automation framework for the supplied stateful Express
 
 The repository is self-contained: it includes the mock server, Python test suite, HTML reporting, JUnit output, and a GitHub Actions workflow.
 
+## Latest Test Report
+
+The most recent local execution completed with all 15 test cases passing. The full interactive report is generated for every local and CI run.
+
+![QA API automation HTML report showing 15 passing tests](docs/report-preview.png)
+
 ## Contents
 
+- [Latest Test Report](#latest-test-report)
 - [Technology](#technology)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
