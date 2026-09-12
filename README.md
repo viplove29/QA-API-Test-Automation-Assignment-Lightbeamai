@@ -298,6 +298,20 @@ python -m pytest tests/test_orders.py -q
 python -m pytest tests/test_exports.py -q
 ```
 
+### Run tests by marker
+
+Each test has endpoint (`auth`, `orders`, or `exports`) and scenario markers. `smoke` selects critical successful workflows, `negative` selects validation and error-path tests, `lifecycle` selects state-transition workflows, and `slow` identifies the 60-second export completion test. Combine markers with pytest expressions when selecting a targeted test run:
+
+```powershell
+python -m pytest -m auth -q
+python -m pytest -m orders -q
+python -m pytest -m exports -q
+python -m pytest -m "exports and slow" -q
+python -m pytest -m smoke -q
+python -m pytest -m negative -q
+python -m pytest -m lifecycle -q
+```
+
 ### Run the long-running export test only
 
 ```powershell

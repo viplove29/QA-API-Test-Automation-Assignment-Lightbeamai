@@ -1,10 +1,14 @@
 from collections.abc import Callable
 from typing import Any
 
+import pytest
 import requests
 
 from framework.api_client import ApiClient
 from framework.polling import wait_for_status
+
+
+pytestmark = pytest.mark.orders
 
 
 def create_order(
@@ -26,6 +30,7 @@ def get_order_status(
     return lambda: api_client.orders.get(order_id, auth_headers)
 
 
+@pytest.mark.smoke
 def test_create_order_calculates_total_and_persists_details(
     api_client: ApiClient,
     auth_headers: dict[str, str],
@@ -47,6 +52,7 @@ def test_create_order_calculates_total_and_persists_details(
     assert response.json()["shippingAddress"] == payload["shippingAddress"]
 
 
+@pytest.mark.negative
 def test_create_order_requires_correlation_id_and_valid_payload(
     api_client: ApiClient,
     auth_headers: dict[str, str],
@@ -64,6 +70,7 @@ def test_create_order_requires_correlation_id_and_valid_payload(
     assert invalid_payload.json() == {"error": "Invalid payload"}
 
 
+@pytest.mark.lifecycle
 def test_order_transitions_from_pending_to_processing_to_completed(
     api_client: ApiClient,
     auth_headers: dict[str, str],
@@ -83,6 +90,7 @@ def test_order_transitions_from_pending_to_processing_to_completed(
     assert wait_for_status(get_status, "COMPLETED", timeout_seconds=12)["status"] == "COMPLETED"
 
 
+@pytest.mark.lifecycle
 def test_cancel_order_while_pending_preserves_cancelled_state(
     api_client: ApiClient,
     auth_headers: dict[str, str],
@@ -104,6 +112,7 @@ def test_cancel_order_while_pending_preserves_cancelled_state(
     assert status_response.json()["status"] == "CANCELLED"
 
 
+@pytest.mark.lifecycle
 def test_cancel_order_while_processing_succeeds(
     api_client: ApiClient,
     auth_headers: dict[str, str],
@@ -124,6 +133,8 @@ def test_cancel_order_while_processing_succeeds(
     assert response.json()["status"] == "CANCELLED"
 
 
+@pytest.mark.lifecycle
+@pytest.mark.negative
 def test_completed_order_cannot_be_cancelled(
     api_client: ApiClient,
     auth_headers: dict[str, str],
@@ -144,6 +155,7 @@ def test_completed_order_cannot_be_cancelled(
     assert response.json() == {"error": "Cannot cancel completed order"}
 
 
+@pytest.mark.negative
 def test_unknown_order_returns_not_found(
     api_client: ApiClient, auth_headers: dict[str, str]
 ) -> None:

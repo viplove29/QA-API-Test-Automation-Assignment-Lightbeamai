@@ -8,6 +8,9 @@ from framework.api_client import ApiClient
 from framework.polling import wait_for_status
 
 
+pytestmark = pytest.mark.exports
+
+
 def create_export(
     api_client: ApiClient, auth_headers: dict[str, str]
 ) -> dict[str, Any]:
@@ -24,6 +27,7 @@ def get_export_status(
     return lambda: api_client.exports.get(job_id, auth_headers)
 
 
+@pytest.mark.smoke
 def test_create_export_returns_processing_job(
     api_client: ApiClient, auth_headers: dict[str, str]
 ) -> None:
@@ -42,6 +46,7 @@ def test_create_export_returns_processing_job(
     }
 
 
+@pytest.mark.negative
 def test_incomplete_export_cannot_be_downloaded(
     api_client: ApiClient, auth_headers: dict[str, str]
 ) -> None:
@@ -53,6 +58,7 @@ def test_incomplete_export_cannot_be_downloaded(
 
 
 @pytest.mark.slow
+@pytest.mark.lifecycle
 def test_completed_export_exposes_csv_download(
     api_client: ApiClient, auth_headers: dict[str, str]
 ) -> None:
@@ -78,6 +84,7 @@ def test_completed_export_exposes_csv_download(
     )
 
 
+@pytest.mark.negative
 def test_export_requires_authentication(api_client: ApiClient) -> None:
     response = api_client.exports.create({})
 
@@ -85,6 +92,7 @@ def test_export_requires_authentication(api_client: ApiClient) -> None:
     assert response.json() == {"error": "Unauthorized: Missing or invalid token"}
 
 
+@pytest.mark.negative
 def test_unknown_export_returns_not_found(
     api_client: ApiClient, auth_headers: dict[str, str]
 ) -> None:
