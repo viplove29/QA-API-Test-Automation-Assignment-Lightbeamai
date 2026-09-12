@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import pytest
 import requests
 
-from tests.helpers import wait_for_status
+from framework.polling import wait_for_status
 
 
 def create_export(

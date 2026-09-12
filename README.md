@@ -207,13 +207,15 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 ```text
 .
 |-- .github/workflows/api-tests.yml    # GitHub Actions workflow
+|-- assets/
+|   `-- report_style.css               # Embedded HTML report theme
+|-- framework/
+|   `-- polling.py                     # Deadline-based async polling helper
 |-- tests/
-|   |-- conftest.py                    # Shared configuration and pytest fixtures
-|   |-- helpers.py                     # Deadline-based async polling helper
-|   |-- report_style.css               # Embedded HTML report theme
 |   |-- test_auth.py                   # Login and authorization tests
 |   |-- test_orders.py                 # Order creation, lifecycle, and cancellation tests
 |   `-- test_exports.py                # Export processing and CSV download tests
+|-- conftest.py                        # Shared configuration and pytest fixtures
 |-- package.json                       # Mock server scripts and Node dependencies
 |-- pytest.ini                         # pytest discovery, marker, and report settings
 |-- requirements.txt                   # Python test/report dependencies
@@ -341,7 +343,7 @@ Start-Process reports/api-test-report.html
 The default path is configured in [pytest.ini](pytest.ini). Override it for a specific run when retaining multiple execution results:
 
 ```powershell
-python -m pytest -q --html=reports/regression-report.html --self-contained-html --css=tests/report_style.css
+python -m pytest -q --html=reports/regression-report.html --self-contained-html --css=assets/report_style.css
 ```
 
 ### JUnit XML report

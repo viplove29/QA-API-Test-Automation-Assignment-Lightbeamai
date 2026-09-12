@@ -3,7 +3,7 @@ from typing import Any
 
 import requests
 
-from tests.helpers import wait_for_status
+from framework.polling import wait_for_status
 
 
 def create_order(
