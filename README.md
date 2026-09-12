@@ -14,6 +14,7 @@ The most recent local execution completed with all 15 test cases passing. The fu
 
 - [Latest Test Report](#latest-test-report)
 - [Technology](#technology)
+- [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
@@ -34,6 +35,31 @@ The most recent local execution completed with all 15 test cases passing. The fu
 | HTTP client | requests | Connection-pooled API requests with explicit timeouts |
 | HTML reporting | pytest-html | Self-contained visual report with logs and test status filtering |
 | CI | GitHub Actions | Installs dependencies, starts the API, runs tests, and uploads artifacts |
+
+## Architecture
+
+The framework uses an API Page Object Model: test files describe expected business behavior, while the API client layer owns endpoint paths, HTTP methods, headers, session reuse, and request timeouts. Shared pytest fixtures provide authentication, API readiness checks, configuration, and isolated test data. Stateful tests use bounded polling rather than fixed sleeps.
+
+```mermaid
+flowchart LR
+Tests[tests/test_*.py\nBusiness workflows and assertions] --> Fixtures[conftest.py\nAuth, health check, test data]
+Tests --> Polling[framework/polling.py\nAsync status polling]
+Fixtures --> Client[framework/api_client.py\nEndpoint objects]
+Client --> Mock[server.js\nExpress mock API]
+Tests --> Reports[HTML report and JUnit XML]
+Reports --> CI[GitHub Actions artifact]
+
+classDef tests fill:#e8f8f1,stroke:#087f5b,color:#172033;
+classDef framework fill:#fff4df,stroke:#ad6a00,color:#172033;
+classDef service fill:#fcecee,stroke:#c83b4d,color:#172033;
+classDef results fill:#edf6f6,stroke:#007d78,color:#172033;
+class Tests tests;
+class Fixtures,Polling,Client framework;
+class Mock service;
+class Reports,CI results;
+```
+
+See [docs/architecture.md](docs/architecture.md) for the complete layered diagram, responsibilities, and request flow.
 
 ## Prerequisites
 
@@ -209,6 +235,9 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 |-- .github/workflows/api-tests.yml    # GitHub Actions workflow
 |-- assets/
 |   `-- report_style.css               # Embedded HTML report theme
+|-- docs/
+|   |-- architecture.md                # Full framework architecture diagram
+|   `-- report-preview.png             # Screenshot of the latest passing report
 |-- framework/
 |   |-- api_client.py                  # API endpoint objects and shared HTTP client
 |   `-- polling.py                     # Deadline-based async polling helper
