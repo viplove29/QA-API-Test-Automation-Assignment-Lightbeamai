@@ -32,6 +32,8 @@ flowchart TB
     end
 
     subgraph Results[Results and Evidence]
+        AllureResults[allure-results/\nNative Allure result data]
+        AllureReport[allure-report/\nInteractive Allure dashboard]
         Html[reports/api-test-report.html\nSelf-contained HTML report]
         Junit[test-results/junit.xml\nJUnit XML]
         Artifact[GitHub Actions artifact\napi-test-results]
@@ -57,8 +59,11 @@ flowchart TB
     ExportsApi --> Mock
     Mock --> OrderState
     Mock --> ExportState
+    TestLayer --> AllureResults
     TestLayer --> Html
     TestLayer --> Junit
+    AllureResults --> AllureReport
+    AllureReport --> Artifact
     Html --> Artifact
     Junit --> Artifact
 
@@ -72,7 +77,7 @@ flowchart TB
     class AuthTests,OrderTests,ExportTests,Markers tests;
     class Fixtures,Polling,ApiClient,AuthApi,OrdersApi,ExportsApi framework;
     class Mock,OrderState,ExportState service;
-    class Html,Junit,Artifact results;
+    class AllureResults,AllureReport,Html,Junit,Artifact results;
 ```
 
 ## Responsibilities
@@ -84,8 +89,8 @@ flowchart TB
 | Test setup | `conftest.py` | Supplies the configurable base URL, startup health check, authenticated headers, and isolated request data. |
 | Async support | `framework/polling.py` | Polls status endpoints with a deadline and includes the final response in timeout failures. |
 | Test selection | `pytest.ini` and decorators | Provides endpoint and scenario markers for fast, focused execution. |
-| Reporting | `pytest-html`, JUnit XML, `assets/report_style.css` | Produces a portable visual report and CI-compatible machine-readable test results. |
-| CI | `.github/workflows/api-tests.yml` | Installs dependencies, starts the mock API, waits for readiness, executes tests, and uploads artifacts. |
+| Reporting | Allure, `pytest-html`, JUnit XML, `assets/report_style.css` | Produces a rich Allure dashboard, portable HTML summary, and CI-compatible machine-readable results. |
+| CI | `.github/workflows/api-tests.yml` | Installs dependencies, starts the mock API, waits for readiness, executes tests, generates the Allure dashboard, and uploads all artifacts. |
 
 ## Request Flow
 
@@ -94,4 +99,6 @@ flowchart TB
 3. A test invokes an endpoint object such as `api_client.orders.create(...)`; it never constructs a URL directly.
 4. `ApiClient` executes the request through a shared `requests.Session` with the standard timeout.
 5. Stateful tests use `wait_for_status(...)` to poll only until the required status is observed or a meaningful timeout is raised.
-6. pytest writes the styled HTML report and JUnit XML after the run; GitHub Actions uploads both as `api-test-results`.
+6. pytest writes native data to `allure-results/`, plus the styled HTML report and JUnit XML.
+7. `npm run allure:generate` converts the native data into the interactive `allure-report/` dashboard.
+8. GitHub Actions uploads the Allure dashboard, raw Allure results, styled HTML report, and JUnit XML as `api-test-results`.

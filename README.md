@@ -2,7 +2,7 @@
 
 A production-oriented API automation framework for the supplied stateful Express mock service. It validates authentication, dependent order workflows, real asynchronous state changes, long-running export processing, and CSV download behavior.
 
-The repository is self-contained: it includes the mock server, Python test suite, HTML reporting, JUnit output, and a GitHub Actions workflow.
+The repository is self-contained: it includes the mock server, Python test suite, Allure reporting, JUnit output, and a GitHub Actions workflow.
 
 ## Latest Test Report
 
@@ -20,7 +20,7 @@ The most recent local execution completed with all 15 test cases passing. The fu
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Run the Test Suite](#run-the-test-suite)
-- [HTML Test Report](#html-test-report)
+- [Reports](#reports)
 - [Test Coverage](#test-coverage)
 - [Async Workflow Strategy](#async-workflow-strategy)
 - [Continuous Integration](#continuous-integration)
@@ -33,7 +33,8 @@ The most recent local execution completed with all 15 test cases passing. The fu
 | API mock | Node.js + Express | Runs the supplied local API contract on port `3000` |
 | Test runner | pytest | Test discovery, fixtures, markers, assertions, and result output |
 | HTTP client | requests | Connection-pooled API requests with explicit timeouts |
-| HTML reporting | pytest-html | Self-contained visual report with logs and test status filtering |
+| Primary reporting | Allure | Interactive dashboard with suites, execution history, and failure details |
+| Secondary reporting | pytest-html | Self-contained single-file HTML execution summary |
 | CI | GitHub Actions | Installs dependencies, starts the API, runs tests, and uploads artifacts |
 
 ## Architecture
@@ -257,6 +258,8 @@ Generated files are excluded from source control:
 
 ```text
 reports/api-test-report.html           # Visual execution report
+allure-results/                        # Raw Allure result data
+allure-report/                         # Generated Allure dashboard
 test-results/junit.xml                 # JUnit XML result artifact
 node_modules/                          # Node.js dependencies
 .venv/                                 # Local Python virtual environment
@@ -363,7 +366,31 @@ python -m pytest -k "completed_export"
 python -m pytest -l
 ```
 
-## HTML Test Report
+## Reports
+
+### Allure report
+
+pytest writes native Allure result data to `allure-results/` on every run. Generate the interactive Allure dashboard with the project-local Allure CLI:
+
+```powershell
+npm run allure:generate
+```
+
+Open the generated dashboard in a local browser session:
+
+```powershell
+npm run allure:open
+```
+
+The dashboard is generated in `allure-report/`. Its `index.html` can also be opened directly after generation:
+
+```powershell
+Start-Process allure-report/index.html
+```
+
+Allure provides a richer execution view than a flat report, including test-suite grouping, status trends, durations, environment details, and expanded failure diagnostics. No global Allure installation is required because the CLI is installed locally through `npm install`.
+
+### pytest HTML report
 
 Every test run generates [reports/api-test-report.html](reports/api-test-report.html). It is a single, portable HTML file with all CSS embedded, so it can be opened or shared without a web server.
 
@@ -400,7 +427,7 @@ Generate JUnit XML for CI systems and test management integrations:
 python -m pytest -q --junitxml=test-results/junit.xml
 ```
 
-The XML includes one test case per pytest test and is uploaded by the GitHub Actions workflow with the HTML report.
+The XML includes one test case per pytest test and is uploaded by the GitHub Actions workflow with the Allure dashboard, Allure raw results, and pytest HTML report.
 
 ## Test Coverage
 
@@ -454,9 +481,10 @@ It performs the following sequence:
 4. Starts the local Express mock server.
 5. Probes the login endpoint until the API is ready.
 6. Runs the complete pytest suite with JUnit XML output.
-7. Uploads `test-results/junit.xml` and `reports/api-test-report.html` as the `api-test-results` workflow artifact, including when a test fails.
+7. Generates an Allure dashboard from the results, even when a test fails.
+8. Uploads `allure-report/`, `allure-results/`, `test-results/junit.xml`, and `reports/api-test-report.html` as the `api-test-results` workflow artifact.
 
-After a GitHub Actions run, open the run page, then download the `api-test-results` artifact to inspect either report.
+After a GitHub Actions run, open the run page, then download the `api-test-results` artifact. Open `allure-report/index.html` locally to review the Allure dashboard.
 
 ## Troubleshooting
 

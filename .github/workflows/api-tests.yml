@@ -38,12 +38,22 @@ jobs:
           cat mock-api.log
           exit 1
       - name: Run API tests
+        id: tests
+        continue-on-error: true
         run: python -m pytest -q --junitxml=test-results/junit.xml
+      - name: Generate Allure report
+        if: always()
+        run: npm run allure:generate
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: api-test-results
           path: |
+            allure-report/
+            allure-results/
             test-results/junit.xml
             reports/api-test-report.html
+      - name: Fail workflow when tests fail
+        if: steps.tests.outcome == 'failure'
+        run: exit 1

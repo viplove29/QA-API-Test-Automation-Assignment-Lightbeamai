@@ -2,9 +2,14 @@
   "name": "qa-api-test-automation-assignment",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report"
   },
   "dependencies": {
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "allure-commandline": "^2.36.0"
   }
 }

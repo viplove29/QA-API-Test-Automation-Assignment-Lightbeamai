@@ -5,6 +5,8 @@ __pycache__/
 coverage.xml
 test-results/
 reports/
+allure-results/
+allure-report/
 .venv/
 venv/
 node_modules/
