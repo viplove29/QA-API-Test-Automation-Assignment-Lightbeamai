@@ -19,6 +19,18 @@
       "value": ""
     },
     {
+      "key": "pendingOrderId",
+      "value": ""
+    },
+    {
+      "key": "processingOrderId",
+      "value": ""
+    },
+    {
+      "key": "completedOrderId",
+      "value": ""
+    },
+    {
       "key": "exportJobId",
       "value": ""
     }
@@ -121,6 +133,36 @@
           "name": "Get Order - COMPLETED (run after 15 seconds)",
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('Order transitions to COMPLETED', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().status).to.eql('COMPLETED');", "});"], "type": "text/javascript" } }],
           "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}" }
+        },
+        {
+          "name": "Create Order for PENDING Cancellation - Save Order ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Creates an order ready for PENDING cancellation', function () {", "  pm.response.to.have.status(202);", "  pm.expect(pm.response.json().status).to.eql('PENDING');", "});", "pm.collectionVariables.set('pendingOrderId', pm.response.json().orderId);"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }, { "key": "X-Correlation-ID", "value": "pending-{{correlationId}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"customerId\":\"{{customerId}}\",\"items\":[{\"sku\":\"widget-1\",\"quantity\":1,\"unitPrice\":10}],\"shippingAddress\":{\"line1\":\"100 Test Street\"}}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/orders" }
+        },
+        {
+          "name": "Cancel Order - PENDING",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Cancels a PENDING order', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().orderId).to.eql(pm.collectionVariables.get('pendingOrderId'));", "  pm.expect(pm.response.json().status).to.eql('CANCELLED');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{pendingOrderId}}" }
+        },
+        {
+          "name": "Create Order for PROCESSING Cancellation - Save Order ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Creates an order ready for PROCESSING cancellation', function () {", "  pm.response.to.have.status(202);", "  pm.expect(pm.response.json().status).to.eql('PENDING');", "});", "pm.collectionVariables.set('processingOrderId', pm.response.json().orderId);"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }, { "key": "X-Correlation-ID", "value": "processing-{{correlationId}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"customerId\":\"{{customerId}}\",\"items\":[{\"sku\":\"widget-1\",\"quantity\":1,\"unitPrice\":10}],\"shippingAddress\":{\"line1\":\"100 Test Street\"}}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/orders" }
+        },
+        {
+          "name": "Cancel Order - PROCESSING (run after 5 seconds)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Cancels a PROCESSING order', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().orderId).to.eql(pm.collectionVariables.get('processingOrderId'));", "  pm.expect(pm.response.json().status).to.eql('CANCELLED');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{processingOrderId}}" }
+        },
+        {
+          "name": "Create Order for COMPLETED Cancellation - Save Order ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Creates an order ready for completed-state validation', function () {", "  pm.response.to.have.status(202);", "  pm.expect(pm.response.json().status).to.eql('PENDING');", "});", "pm.collectionVariables.set('completedOrderId', pm.response.json().orderId);"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }, { "key": "X-Correlation-ID", "value": "completed-{{correlationId}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"customerId\":\"{{customerId}}\",\"items\":[{\"sku\":\"widget-1\",\"quantity\":1,\"unitPrice\":10}],\"shippingAddress\":{\"line1\":\"100 Test Street\"}}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/orders" }
+        },
+        {
+          "name": "Cancel Order - COMPLETED (run after 15 seconds)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Rejects cancellation of a COMPLETED order', function () {", "  pm.response.to.have.status(409);", "  pm.expect(pm.response.json().error).to.eql('Cannot cancel completed order');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{completedOrderId}}" }
         },
         {
           "name": "Create Order - Missing Correlation ID",

@@ -391,6 +391,9 @@ The collection automatically stores these values as it runs:
 | `correlationId` | Create-order pre-request script | Create-order request |
 | `customerId` | Create-order pre-request script | Create-order request |
 | `orderId` | Create-order test script | Dependent order status requests |
+| `pendingOrderId` | Create-order-for-pending-cancellation request | Immediate pending-order cancellation |
+| `processingOrderId` | Create-order-for-processing-cancellation request | Processing-order cancellation after five seconds |
+| `completedOrderId` | Create-order-for-completed-cancellation request | Completed-order conflict check after fifteen seconds |
 | `exportJobId` | Create-export test script | Dependent export status and download requests |
 
 ### Run workflow requests
@@ -403,6 +406,8 @@ For stateful workflow checks, use the Collection Runner and set a request delay:
 | --- | --- | --- |
 | Order processing | 5 seconds before **Get Order - PROCESSING** | `PROCESSING` |
 | Order completion | 15 seconds from order creation before **Get Order - COMPLETED** | `COMPLETED` |
+| Cancel while processing | 5 seconds after **Create Order for PROCESSING Cancellation** | `200` and `CANCELLED` |
+| Cancel after completion | 15 seconds after **Create Order for COMPLETED Cancellation** | `409` conflict |
 | Export completion | 60 seconds from export creation before **Get Export - COMPLETED** | `COMPLETED` with a download URL |
 
 Postman does not use the pytest polling helper, so these lifecycle requests are deliberately named with their required timing. For a fully automated stateful run with bounded polling and CI artifacts, use the pytest suite.
