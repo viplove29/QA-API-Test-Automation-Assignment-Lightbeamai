@@ -6,9 +6,9 @@ The repository is self-contained: it includes the mock server, Python test suite
 
 ## Latest Test Report
 
-The final full local verification completed with all 20 test cases passing. pytest writes Allure result data on every run; the interactive dashboard is generated from that data and is also produced by GitHub Actions. The screenshot below is a reference Allure dashboard from an earlier all-passing run; generate a fresh dashboard after any run with `npm run allure:generate`.
+The final full local verification completed with all 20 test cases passing. pytest writes Allure result data on every run; the interactive dashboard is generated from that data and is also produced by GitHub Actions.
 
-![Reference Allure dashboard showing an all-passing API test run](docs/allure-report-preview.png)
+![Allure dashboard showing 20 API test cases with 100 percent passing](docs/allure-report-preview.png)
 
 ## Contents
 
@@ -240,7 +240,7 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 |   `-- report_style.css               # Embedded HTML report theme
 |-- docs/
 |   |-- architecture.md                # Full framework architecture diagram
-|   |-- allure-report-preview.png      # Reference screenshot of an all-passing Allure dashboard
+|   |-- allure-report-preview.png      # Screenshot of the final 20-test Allure dashboard
 |   `-- report-preview.png             # Screenshot of the pytest HTML report
 |-- framework/
 |   |-- api_client.py                  # API endpoint objects and shared HTTP client
