@@ -6,9 +6,9 @@ The repository is self-contained: it includes the mock server, Python test suite
 
 ## Latest Test Report
 
-The most recent full local execution completed with all 15 test cases passing. pytest writes Allure result data on every run; the interactive dashboard is generated from that data and is also produced by GitHub Actions.
+The final full local verification completed with all 20 test cases passing. pytest writes Allure result data on every run; the interactive dashboard is generated from that data and is also produced by GitHub Actions. The screenshot below is a reference Allure dashboard from an earlier all-passing run; generate a fresh dashboard after any run with `npm run allure:generate`.
 
-![Allure dashboard showing 15 API test cases with 100 percent passing](docs/allure-report-preview.png)
+![Reference Allure dashboard showing an all-passing API test run](docs/allure-report-preview.png)
 
 ## Contents
 
@@ -146,7 +146,7 @@ python -m pytest -q --junitxml=test-results/junit.xml
 Expected result:
 
 ```text
-15 passed
+20 passed
 ```
 
 The command creates native Allure results, a machine-readable JUnit file, and a single-file pytest HTML summary. Generate the Allure dashboard with `npm run allure:generate`.
@@ -194,7 +194,7 @@ Start with authentication to confirm the mock API and Python client are connecte
 python -m pytest tests/test_auth.py -q
 ```
 
-Expected result: `3 passed`.
+Expected result: `8 passed`.
 
 Next, run the stateful order workflows:
 
@@ -220,7 +220,7 @@ After the focused runs pass, execute the entire suite and generate its JUnit art
 python -m pytest -q --junitxml=test-results/junit.xml
 ```
 
-Expected result: `15 passed` in roughly 95 seconds. The same run generates `allure-results/`, `reports/api-test-report.html`, and `test-results/junit.xml`.
+Expected result: `20 passed` in roughly 95 seconds. The same run generates `allure-results/`, `reports/api-test-report.html`, and `test-results/junit.xml`.
 
 Generate and open the primary Allure dashboard:
 
@@ -240,7 +240,7 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 |   `-- report_style.css               # Embedded HTML report theme
 |-- docs/
 |   |-- architecture.md                # Full framework architecture diagram
-|   |-- allure-report-preview.png      # Screenshot of the 15-pass Allure dashboard
+|   |-- allure-report-preview.png      # Reference screenshot of an all-passing Allure dashboard
 |   `-- report-preview.png             # Screenshot of the pytest HTML report
 |-- framework/
 |   |-- api_client.py                  # API endpoint objects and shared HTTP client
@@ -475,7 +475,7 @@ The XML includes one test case per pytest test and is uploaded by the GitHub Act
 | Endpoint | Behavior verified |
 | --- | --- |
 | `POST /v1/auth/login` | Valid credentials return `200`, a token, and `expiresIn: 3600`; missing credentials return `400` |
-| Protected routes | Missing Bearer authorization returns `401` with the documented error payload |
+| Protected routes | Every protected endpoint rejects missing Bearer authorization with `401` and the documented error payload |
 | `POST /v1/orders` | Requires `X-Correlation-ID`; validates payload; returns `202`, `PENDING`, an order ID, timestamp, and calculated total |
 | `GET /v1/orders/:orderId` | Returns persisted order fields; unknown IDs return `404`; triggers and verifies status transitions |
 | `DELETE /v1/orders/:orderId` | Cancels a `PENDING` or `PROCESSING` order; cancelled state persists; completed orders return `409`; unknown IDs return `404` |

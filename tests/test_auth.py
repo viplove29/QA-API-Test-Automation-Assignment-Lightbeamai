@@ -31,3 +31,32 @@ def test_protected_route_rejects_missing_bearer_token(api_client: ApiClient) -> 
 
     assert response.status_code == 401
     assert response.json() == {"error": "Unauthorized: Missing or invalid token"}
+
+
+@pytest.mark.negative
+@pytest.mark.parametrize(
+    "api_request",
+    [
+        lambda api_client: api_client.orders.create(
+            payload={"customerId": "customer-unauthorized"},
+            auth_headers={},
+            correlation_id="correlation-unauthorized",
+        ),
+        lambda api_client: api_client.orders.delete("ORD-00000", auth_headers={}),
+        lambda api_client: api_client.exports.create(auth_headers={}),
+        lambda api_client: api_client.exports.get("JOB-00000", auth_headers={}),
+        lambda api_client: api_client.exports.download("JOB-00000", auth_headers={}),
+    ],
+    ids=[
+        "create-order",
+        "cancel-order",
+        "create-export",
+        "get-export-status",
+        "download-export",
+    ],
+)
+def test_protected_endpoints_require_bearer_token(api_client: ApiClient, api_request) -> None:
+    response = api_request(api_client)
+
+    assert response.status_code == 401
+    assert response.json() == {"error": "Unauthorized: Missing or invalid token"}
