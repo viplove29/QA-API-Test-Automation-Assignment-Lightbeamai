@@ -373,7 +373,7 @@ python -m pytest -l
 
 ## Postman Collection
 
-An import-ready Postman collection is available at [postman/QA-API-Test-Automation.postman_collection.json](postman/QA-API-Test-Automation.postman_collection.json). It mirrors the core authentication, order, export, and error-path coverage in a visual format.
+An import-ready Postman collection is available at [postman/QA-API-Test-Automation.postman_collection.json](postman/QA-API-Test-Automation.postman_collection.json). It mirrors the core authentication, order, export, and error-path coverage in a visual format, including missing-token `401` checks for every protected endpoint.
 
 ### Import and configure
 
