@@ -20,6 +20,7 @@ The most recent full local execution completed with all 15 test cases passing. p
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Run the Test Suite](#run-the-test-suite)
+- [Postman Collection](#postman-collection)
 - [Reports](#reports)
 - [Test Coverage](#test-coverage)
 - [Async Workflow Strategy](#async-workflow-strategy)
@@ -250,6 +251,8 @@ When finished, return to Terminal 1 and press `Ctrl+C` to stop the mock API.
 |   `-- test_exports.py                # Export processing and CSV download tests
 |-- conftest.py                        # Shared configuration and pytest fixtures
 |-- package.json                       # Mock server scripts and Node dependencies
+|-- postman/
+|   `-- QA-API-Test-Automation.postman_collection.json  # Import-ready API collection
 |-- pytest.ini                         # pytest discovery, marker, and report settings
 |-- requirements.txt                   # Python test/report dependencies
 |-- server.js                          # Supplied Express mock API
@@ -367,6 +370,42 @@ python -m pytest -k "completed_export"
 # Show local variables for failures.
 python -m pytest -l
 ```
+
+## Postman Collection
+
+An import-ready Postman collection is available at [postman/QA-API-Test-Automation.postman_collection.json](postman/QA-API-Test-Automation.postman_collection.json). It mirrors the core authentication, order, export, and error-path coverage in a visual format.
+
+### Import and configure
+
+1. Start the local API with `npm run start`.
+2. Open Postman and select **Import**.
+3. Choose the collection JSON file from the `postman/` directory.
+4. Open the imported collection and confirm the collection variable `baseUrl` is `http://localhost:3000/v1`.
+5. Run **Login - Save Bearer Token** first. Its test script stores the returned token as `bearerToken` for protected requests.
+
+The collection automatically stores these values as it runs:
+
+| Variable | Set by | Used by |
+| --- | --- | --- |
+| `bearerToken` | Login request | Every protected request |
+| `correlationId` | Create-order pre-request script | Create-order request |
+| `customerId` | Create-order pre-request script | Create-order request |
+| `orderId` | Create-order test script | Dependent order status requests |
+| `exportJobId` | Create-export test script | Dependent export status and download requests |
+
+### Run workflow requests
+
+Run the folders in this order: **01 - Authentication**, **02 - Orders**, then **03 - Exports**. Each request includes Postman test assertions for its expected HTTP status and response contract.
+
+For stateful workflow checks, use the Collection Runner and set a request delay:
+
+| Workflow | Required delay before the named request | Expected state |
+| --- | --- | --- |
+| Order processing | 5 seconds before **Get Order - PROCESSING** | `PROCESSING` |
+| Order completion | 15 seconds from order creation before **Get Order - COMPLETED** | `COMPLETED` |
+| Export completion | 60 seconds from export creation before **Get Export - COMPLETED** | `COMPLETED` with a download URL |
+
+Postman does not use the pytest polling helper, so these lifecycle requests are deliberately named with their required timing. For a fully automated stateful run with bounded polling and CI artifacts, use the pytest suite.
 
 ## Reports
 

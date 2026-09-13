@@ -1,0 +1,143 @@
+{
+  "info": {
+    "_postman_id": "dd98e9f2-8228-4c41-9e39-0dc784d4e4e8",
+    "name": "QA API Test Automation",
+    "description": "Postman collection for the local stateful QA API. Run requests in folder order. The authentication request saves bearerToken; create requests save orderId and exportJobId for dependent requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/v1"
+    },
+    {
+      "key": "bearerToken",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "exportJobId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication",
+      "item": [
+        {
+          "name": "Login - Save Bearer Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 200 OK', function () {", "  pm.response.to.have.status(200);", "});",
+                  "pm.test('Returns a token and expiry', function () {", "  var body = pm.response.json();", "  pm.expect(body.token).to.be.a('string').and.not.empty;", "  pm.expect(body.expiresIn).to.eql(3600);", "});",
+                  "pm.collectionVariables.set('bearerToken', pm.response.json().token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"postman-tester\",\n  \"apiKey\": \"postman-api-key\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login - Missing Credentials",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 400 for missing credentials', function () {", "  pm.response.to.have.status(400);", "  pm.expect(pm.response.json().error).to.eql('Missing credentials');", "});"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Orders - Missing Bearer Token",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 401 without a bearer token', function () {", "  pm.response.to.have.status(401);", "  pm.expect(pm.response.json().error).to.eql('Unauthorized: Missing or invalid token');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/orders/ORD-00000" }
+        }
+      ]
+    },
+    {
+      "name": "02 - Orders",
+      "item": [
+        {
+          "name": "Create Order - Save Order ID",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.collectionVariables.set('correlationId', pm.variables.replaceIn('{{$guid}}'));", "pm.collectionVariables.set('customerId', 'customer-' + pm.variables.replaceIn('{{$guid}}'));"], "type": "text/javascript" } },
+            { "listen": "test", "script": { "exec": ["pm.test('Returns 202 PENDING with the calculated total', function () {", "  pm.response.to.have.status(202);", "  var body = pm.response.json();", "  pm.expect(body.status).to.eql('PENDING');", "  pm.expect(body.orderId).to.match(/^ORD-/);", "  pm.expect(body.totalAmount).to.eql(40);", "});", "pm.collectionVariables.set('orderId', pm.response.json().orderId);"], "type": "text/javascript" } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }, { "key": "X-Correlation-ID", "value": "{{correlationId}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"items\": [\n    { \"sku\": \"widget-1\", \"quantity\": 2, \"unitPrice\": 12.5 },\n    { \"sku\": \"widget-2\", \"quantity\": 3, \"unitPrice\": 5 }\n  ],\n  \"shippingAddress\": {\n    \"line1\": \"100 Test Street\",\n    \"city\": \"Automation City\",\n    \"postalCode\": \"10001\"\n  }\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/orders"
+          }
+        },
+        {
+          "name": "Get New Order - PENDING",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns the persisted PENDING order', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().status).to.eql('PENDING');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}" }
+        },
+        {
+          "name": "Get Order - PROCESSING (run after 5 seconds)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Order transitions to PROCESSING', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().status).to.eql('PROCESSING');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}" }
+        },
+        {
+          "name": "Get Order - COMPLETED (run after 15 seconds)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Order transitions to COMPLETED', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().status).to.eql('COMPLETED');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}" }
+        },
+        {
+          "name": "Create Order - Missing Correlation ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 400 when correlation ID is absent', function () {", "  pm.response.to.have.status(400);", "  pm.expect(pm.response.json().error).to.eql('Missing X-Correlation-ID header');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"customerId\":\"customer-invalid\",\"items\":[{\"quantity\":1,\"unitPrice\":1}],\"shippingAddress\":{\"line1\":\"Test\"}}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/orders" }
+        },
+        {
+          "name": "Unknown Order - Not Found",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 404 for an unknown order', function () {", "  pm.response.to.have.status(404);", "  pm.expect(pm.response.json().error).to.eql('Order not found');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/orders/ORD-00000" }
+        }
+      ]
+    },
+    {
+      "name": "03 - Exports",
+      "item": [
+        {
+          "name": "Create Export - Save Job ID",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 202 PROCESSING export job', function () {", "  pm.response.to.have.status(202);", "  var body = pm.response.json();", "  pm.expect(body.status).to.eql('PROCESSING');", "  pm.expect(body.jobId).to.match(/^JOB-/);", "  pm.expect(body.pollIntervalSeconds).to.eql(5);", "});", "pm.collectionVariables.set('exportJobId', pm.response.json().jobId);"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/exports" }
+        },
+        {
+          "name": "Download Incomplete Export - 400",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 400 before the export completes', function () {", "  pm.response.to.have.status(400);", "  pm.expect(pm.response.json().error).to.eql('Export file is not ready yet');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/exports/{{exportJobId}}/download" }
+        },
+        {
+          "name": "Get Export - COMPLETED (run after 60 seconds)",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Export transitions to COMPLETED with download URL', function () {", "  pm.response.to.have.status(200);", "  var body = pm.response.json();", "  pm.expect(body.status).to.eql('COMPLETED');", "  pm.expect(body.downloadUrl).to.eql('/v1/exports/' + pm.collectionVariables.get('exportJobId') + '/download');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/exports/{{exportJobId}}" }
+        },
+        {
+          "name": "Download Completed Export - CSV",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns the CSV export', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');", "  pm.expect(pm.response.text()).to.include('orderId,status,totalAmount');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/exports/{{exportJobId}}/download" }
+        },
+        {
+          "name": "Unknown Export - Not Found",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Returns 404 for an unknown export', function () {", "  pm.response.to.have.status(404);", "  pm.expect(pm.response.json().error).to.eql('Export job not found');", "});"], "type": "text/javascript" } }],
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{bearerToken}}" }], "url": "{{baseUrl}}/exports/JOB-00000" }
+        }
+      ]
+    }
+  ]
+}
